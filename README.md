@@ -19,7 +19,7 @@ Requirements: Node.js 24 or later and npm.
 1. Install dependencies from the lockfile:
 
    ```bash
-   npm ci
+   npm install
    ```
 
    `better-sqlite3` needs its approved install script to download or build the native SQLite binding. The project allow-lists that package only.
@@ -85,3 +85,50 @@ npm test
 npm run lint
 npm run build
 ```
+
+## Production Deployment
+
+The local development setup uses SQLite:
+
+```env
+DATABASE_URL="file:./prisma/dev.db"
+```
+
+This local SQLite file should not be used as the production database on Vercel.
+Vercel's serverless filesystem is not persistent, so production data can be lost
+or become inconsistent between deployments and function instances.
+
+### Deploy the application to Vercel
+
+1. Import the `shaheer162008/hrms` repository into [Vercel](https://vercel.com/).
+2. Keep the project root as the root directory and allow Vercel to detect Next.js.
+3. Add these production environment variables in **Project Settings → Environment Variables**:
+
+   ```env
+   AUTH_SECRET=<a-long-random-production-secret>
+   DATABASE_URL=<production-database-connection-string>
+   ```
+
+   Generate a secret locally with:
+
+   ```bash
+   node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
+   ```
+
+4. Deploy the `main` branch. Future pushes to `main` will trigger new production deployments.
+
+Do not commit `.env` or copy its secrets into GitHub. Configure secrets in Vercel instead.
+
+### Production database options
+
+- **Turso/libSQL:** Recommended when keeping a SQLite-compatible database. The
+  application must be migrated from `@prisma/adapter-better-sqlite3` to the
+  libSQL adapter before deployment, and the production migrations must be
+  applied to the hosted database.
+- **Prisma Postgres:** Recommended for a larger or growing installation. Change
+  the Prisma datasource to PostgreSQL and create/apply a new production migration.
+- **Railway, Render, or a VPS with persistent storage:** Suitable if SQLite must
+  remain unchanged, provided the database file is stored on a persistent disk.
+
+For Vercel, use a hosted database rather than `prisma/dev.db`. The current
+SQLite configuration is intended for local development and testing.
