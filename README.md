@@ -30,13 +30,13 @@ Requirements: Node.js 24 or later and npm.
    node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
    ```
 
-   The default `DATABASE_URL` is `file:./prisma/dev.db`. If
-   If both `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN` are set, the app uses
-   Turso instead of the local SQLite file. If neither is set, it uses local
-   SQLite. A partial Turso configuration fails explicitly instead of silently
-   writing production data to a local database.
+   The default `DATABASE_URL` is `file:./prisma/dev.db`. If both
+   `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN` are set, the app uses Turso
+   instead of the local SQLite file. If neither is set, it uses local SQLite.
+   A partial Turso configuration fails explicitly instead of silently writing
+   production data to a local database.
 
-3. Apply the SQLite migration and seed the demo organization:
+3. Apply the local SQLite migrations and seed the demo organization:
 
    ```bash
    npm run db:setup
@@ -110,7 +110,8 @@ or become inconsistent between deployments and function instances.
 
    ```env
    AUTH_SECRET=<a-long-random-production-secret>
-   DATABASE_URL=<production-database-connection-string>
+   TURSO_DATABASE_URL=<your-turso-libsql-url>
+   TURSO_AUTH_TOKEN=<your-turso-auth-token>
    ```
 
    Generate a secret locally with:
@@ -127,10 +128,11 @@ Do not commit `.env` or copy its secrets into GitHub. Configure secrets in Verce
 
 - **Turso/libSQL:** Recommended when keeping a SQLite-compatible database. Set
   `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN`; the application and seed script
-  automatically use the libSQL adapter when both values are present. Apply the
-  production migrations to the hosted database before seeding. A new Turso
-  database is empty, so the first-time order is: apply all migrations, then
-  run `npm run db:seed` with the Turso variables configured.
+  automatically use the libSQL adapter when both values are present. A new
+  Turso database is empty, so apply the migration files in
+  `prisma/migrations/` in timestamp order, then run `npm run db:seed` with the
+  Turso variables configured. Do not run `prisma migrate dev` against the
+  hosted Turso database.
 - **Prisma Postgres:** Recommended for a larger or growing installation. Change
   the Prisma datasource to PostgreSQL and create/apply a new production migration.
 - **Railway, Render, or a VPS with persistent storage:** Suitable if SQLite must
