@@ -1,10 +1,19 @@
+import { PrismaLibSql } from "@prisma/adapter-libsql";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { PrismaClient } from "../src/generated/prisma/client";
+import { getTursoConfig } from "../src/lib/db-url";
 import bcrypt from "bcryptjs";
 
-const adapter = new PrismaBetterSqlite3({
-  url: process.env.DATABASE_URL ?? "file:./prisma/dev.db",
-});
+const tursoConfig = getTursoConfig();
+const adapter =
+  tursoConfig
+    ? new PrismaLibSql({
+        url: tursoConfig.url,
+        authToken: tursoConfig.authToken,
+      })
+    : new PrismaBetterSqlite3({
+        url: process.env.DATABASE_URL ?? "file:./prisma/dev.db",
+      });
 const prisma = new PrismaClient({ adapter });
 const demoPassword = "Demo@123";
 
