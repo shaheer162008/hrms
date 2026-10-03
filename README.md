@@ -1,58 +1,107 @@
 # Cell U Tech FZCO HRMS
 
-A full-stack HR management MVP for Cell U Tech FZCO with subsidiary-scoped people operations, reporting lines, and multi-step leave approvals.
+> A modern, role-based Human Resources Management System for managing employees, organizational structure, leave workflows, and people operations across multiple subsidiaries.
 
-## Stack
+## Overview
 
-- Next.js 16 App Router, React 19, and TypeScript
-- Tailwind CSS 4 with the existing shadcn/ui foundation
-- Prisma ORM 7.10 with SQLite/libSQL and Prisma driver adapters
-- HTTP-only JWT sessions (`jose`) and bcrypt password hashes
-- Zod validation and Recharts visualizations
+Cell U Tech FZCO HRMS is a full-stack Next.js application built for day-to-day HR operations. It provides role-scoped dashboards, employee lifecycle controls, reporting hierarchies, and a multi-step leave approval workflow for Dubai and London subsidiaries.
 
-Prisma 8 is not used: the current stable Prisma 7 toolchain supports SQLite, while the installed Prisma 8 release was an RC. Prisma CLI, Client, and adapter are pinned to the same 7.10 release.
+## Features
 
-## Local Setup
+- Role-based authentication with HTTP-only JWT sessions
+- Five roles: Super Admin, HR Manager, Department Head, Team Lead, and Employee
+- Role- and subsidiary-scoped authorization for pages and server actions
+- Employee directory, profiles, reporting lines, and organization chart
+- Employee activation, reactivation, role changes, and termination workflows
+- Termination effective dates and reasons with audit history
+- Safeguards against self-termination, removing the last Super Admin, reporting cycles, and invalid cross-subsidiary assignments
+- Leave request creation, balance validation, overlap checks, and status tracking
+- Multi-step manager and department-head leave approvals
+- Approval comments and decision history
+- Automatic leave balance deduction after approval
+- Employee notifications and audit logs
+- Role-scoped dashboards with charts and HR metrics
+- Cell U Tech FZCO branding and logo
 
-Requirements: Node.js 24 or later and npm.
+## Technology
 
-1. Install dependencies from the lockfile:
+- Next.js 16 App Router
+- React 19 and TypeScript
+- Tailwind CSS 4
+- Prisma ORM 7.10
+- SQLite for local development
+- Turso/libSQL for hosted production database
+- Prisma driver adapters
+- JWT sessions with `jose`
+- Password hashing with `bcryptjs`
+- Recharts
+- Vitest
 
-   ```bash
-   npm install
-   ```
+## Requirements
 
-   `better-sqlite3` needs its approved install script to download or build the native SQLite binding. The project allow-lists that package only.
+- Node.js 24 or later
+- npm
+- A local SQLite database for development, or a Turso database for hosted use
 
-2. Create `.env` from `.env.example` (`Copy-Item .env.example .env` in PowerShell, or `cp .env.example .env` in Git Bash), then set a private `AUTH_SECRET`. Generate one with Node:
+## Getting Started
 
-   ```bash
-   node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
-   ```
+### 1. Install dependencies
 
-   The default `DATABASE_URL` is `file:./prisma/dev.db`. If both
-   `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN` are set, the app uses Turso
-   instead of the local SQLite file. If neither is set, it uses local SQLite.
-   A partial Turso configuration fails explicitly instead of silently writing
-   production data to a local database.
+```bash
+npm install
+```
 
-3. Apply the local SQLite migrations and seed the demo organization:
+### 2. Configure environment variables
 
-   ```bash
-   npm run db:setup
-   ```
+Create a local `.env` file from the example:
 
-4. Start the app:
+```powershell
+Copy-Item .env.example .env
+```
 
-   ```bash
-   npm run dev
-   ```
+Or with Git Bash:
 
-Open <http://localhost:3000>. `npm run dev` and `npm run build` generate Prisma Client automatically. To regenerate it manually, use `npm run db:generate`.
+```bash
+cp .env.example .env
+```
+
+For local SQLite development, keep:
+
+```env
+DATABASE_URL="file:./prisma/dev.db"
+AUTH_SECRET="replace-with-a-long-random-secret"
+AUTH_URL="http://localhost:3000"
+```
+
+Generate a secure auth secret with:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
+```
+
+### 3. Create the local database and seed demo data
+
+```bash
+npm run db:setup
+```
+
+This applies the local Prisma migrations and creates the seeded Cell U Tech FZCO demo organization.
+
+### 4. Start the development server
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000).
 
 ## Demo Accounts
 
-Every seeded account uses the password `Demo@123`.
+All seeded accounts use:
+
+```text
+Password: Demo@123
+```
 
 | Role | Email |
 | --- | --- |
@@ -63,80 +112,110 @@ Every seeded account uses the password `Demo@123`.
 | Team Lead | `bilal@cellutechfzco.com` |
 | Employee | `lina@cellutechfzco.com` |
 
-Additional London accounts for the second subsidiary and approval examples are `olivia.head@cellutechfzco.com`, `liam@cellutechfzco.com`, `mia@cellutechfzco.com`, and `jacob@cellutechfzco.com`.
+Additional seeded London accounts:
 
-## Implemented
+```text
+olivia.head@cellutechfzco.com
+liam@cellutechfzco.com
+mia@cellutechfzco.com
+jacob@cellutechfzco.com
+```
 
-- Five role types with signed, HTTP-only sessions and server-side route/action authorization.
-- Two countries, two subsidiaries, four departments, and a multilevel reporting hierarchy.
-- Seeded local holidays and yearly leave balances.
-- Leave requests routed to the direct manager, then to the department head when the request exceeds the configured day threshold or its type requires escalation.
-- Approval decision/comment history, balance validation/deduction, overlap checks, and employee-visible status.
-- Employee lifecycle controls: active/reactivated state, termination effective dates and reasons, audit logs, employment notifications, role changes, and subsidiary-scoped assignment updates.
-- Lifecycle safeguards prevent self-termination, removing the last super admin, reporting-line cycles, invalid cross-subsidiary assignments, and orphaned reports; termination reparents reports, cancels the employee's pending leave, and reroutes pending approvals where a valid replacement exists.
-- Role-scoped dashboards with Prisma-backed metrics and Recharts, employee directory/profile views, and a reporting-tree organization chart.
+## Database Configuration
 
-## Deferred
+The application automatically selects the database based on environment variables:
 
-Attendance, document uploads, exports, holiday exclusion from leave-day calculations, HR approval overrides, full organization CRUD, and configurable permission editing are not part of this MVP. Payroll, recruitment, and performance modules can extend the existing employee/subsidiary relationships with their own domain models and scoped dashboards.
+| Configuration | Database used |
+| --- | --- |
+| Neither Turso variable is set | Local SQLite using `DATABASE_URL` |
+| Both Turso variables are set | Hosted Turso/libSQL |
+| Only one Turso variable is set | Explicit configuration error |
+
+Turso configuration:
+
+```env
+TURSO_DATABASE_URL="libsql://your-database.turso.io"
+TURSO_AUTH_TOKEN="your-turso-auth-token"
+AUTH_SECRET="your-production-auth-secret"
+```
+
+When both Turso variables are present, the application and seed script use Turso instead of the local SQLite file. Never commit `.env` or database tokens to GitHub.
+
+### First-time Turso setup
+
+A new Turso database is empty. Apply the SQL files in `prisma/migrations/` in timestamp order, then run the seed command with the Turso variables configured:
+
+```bash
+npm run db:seed
+```
+
+Do not run `prisma migrate dev` directly against the hosted Turso database. Create and test migrations locally, then apply the migration SQL to the hosted database.
+
+## Deploying to Vercel
+
+1. Import `shaheer162008/hrms` into [Vercel](https://vercel.com/).
+2. Keep the project root as the root directory.
+3. Let Vercel detect the Next.js framework automatically.
+4. Add these production environment variables under **Project Settings → Environment Variables**:
+
+   ```env
+   TURSO_DATABASE_URL=your-turso-database-url
+   TURSO_AUTH_TOKEN=your-turso-auth-token
+   AUTH_SECRET=your-production-auth-secret
+   ```
+
+5. Deploy the `main` branch.
+
+Every future push to `main` can trigger a new production deployment. Use a hosted database for Vercel; do not use `prisma/dev.db` as a production database because Vercel's serverless filesystem is not persistent.
+
+## Available Scripts
+
+| Command | Purpose |
+| --- | --- |
+| `npm run dev` | Start the development server |
+| `npm run build` | Create a production build |
+| `npm run start` | Start the production server |
+| `npm run lint` | Run ESLint |
+| `npm test` | Run the Vitest test suite |
+| `npm run db:generate` | Generate the Prisma client |
+| `npm run db:migrate` | Create/apply a local development migration |
+| `npm run db:seed` | Seed the configured database |
+| `npm run db:setup` | Run local migrations and seed data |
+
+## Project Structure
+
+```text
+prisma/
+  migrations/       Database migrations
+  schema.prisma     Prisma data model
+  seed.ts           Demo organization and account seed
+src/
+  app/              Next.js routes, pages, and server actions
+  components/       Shared application and dashboard components
+  lib/              Authentication, database, and workflow helpers
+public/
+  logo-main.png     Cell U Tech FZCO logo
+```
 
 ## Verification
 
+Before opening a pull request or deploying:
+
 ```bash
 npm run db:generate
-npm run db:seed
 npm test
 npm run lint
 npm run build
 ```
 
-## Production Deployment
+## Deferred Features
 
-The local development setup uses SQLite:
+The current MVP does not include attendance, payroll, recruitment, performance management, document uploads, notifications beyond employee workflow notifications, exports, holiday exclusion from leave-day calculations, full organization CRUD, or configurable permission editing.
 
-```env
-DATABASE_URL="file:./prisma/dev.db"
-```
+## Security Notes
 
-This local SQLite file should not be used as the production database on Vercel.
-Vercel's serverless filesystem is not persistent, so production data can be lost
-or become inconsistent between deployments and function instances.
-
-### Deploy the application to Vercel
-
-1. Import the `shaheer162008/hrms` repository into [Vercel](https://vercel.com/).
-2. Keep the project root as the root directory and allow Vercel to detect Next.js.
-3. Add these production environment variables in **Project Settings → Environment Variables**:
-
-   ```env
-   AUTH_SECRET=<a-long-random-production-secret>
-   TURSO_DATABASE_URL=<your-turso-libsql-url>
-   TURSO_AUTH_TOKEN=<your-turso-auth-token>
-   ```
-
-   Generate a secret locally with:
-
-   ```bash
-   node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
-   ```
-
-4. Deploy the `main` branch. Future pushes to `main` will trigger new production deployments.
-
-Do not commit `.env` or copy its secrets into GitHub. Configure secrets in Vercel instead.
-
-### Production database options
-
-- **Turso/libSQL:** Recommended when keeping a SQLite-compatible database. Set
-  `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN`; the application and seed script
-  automatically use the libSQL adapter when both values are present. A new
-  Turso database is empty, so apply the migration files in
-  `prisma/migrations/` in timestamp order, then run `npm run db:seed` with the
-  Turso variables configured. Do not run `prisma migrate dev` against the
-  hosted Turso database.
-- **Prisma Postgres:** Recommended for a larger or growing installation. Change
-  the Prisma datasource to PostgreSQL and create/apply a new production migration.
-- **Railway, Render, or a VPS with persistent storage:** Suitable if SQLite must
-  remain unchanged, provided the database file is stored on a persistent disk.
-
-For Vercel, use a hosted database rather than `prisma/dev.db`. The current
-SQLite configuration is intended for local development and testing.
+- Keep `.env` out of version control.
+- Rotate any database token that has been exposed.
+- Use a unique production `AUTH_SECRET`.
+- Configure production secrets in Vercel environment variables.
+- Do not use demo credentials in a production environment.
