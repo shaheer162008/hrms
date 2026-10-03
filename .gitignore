@@ -12,6 +12,8 @@
 
 # testing
 /coverage
+/src/generated/prisma/
+/prisma/*.db
 
 # next.js
 /.next/
